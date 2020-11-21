@@ -1,4 +1,4 @@
-from gym.envs.registration import register
+from gym.envs.registration import register  # type: ignore
 
 register(
     id='azul-v0',

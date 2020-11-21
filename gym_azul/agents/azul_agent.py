@@ -1,5 +1,5 @@
 from typing import List
-import numpy as np
+import numpy as np  # type: ignore
 
 
 class AzulAgent(object):

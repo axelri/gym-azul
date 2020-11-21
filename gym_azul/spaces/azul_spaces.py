@@ -1,7 +1,7 @@
 from typing import Tuple
 
-import numpy as np
-from gym import spaces, Space
+import numpy as np  # type: ignore
+from gym import spaces, Space  # type: ignore
 
 from gym_azul.game.game_utils import get_num_factories, TOTAL_COLORS, \
     MAX_POINTS, TILES_PER_COLOR, TOTAL_LINES, TOTAL_SLOTS

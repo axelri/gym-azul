@@ -1,5 +1,5 @@
 from typing import Tuple
-import numpy as np
+import numpy as np  # type: ignore
 
 from gym_azul.game.game_state import AzulState, AzulPlayerState
 from gym_azul.game.game_utils import TOTAL_COLORS, TOTAL_LINES

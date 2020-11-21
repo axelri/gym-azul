@@ -1,9 +1,8 @@
 from typing import List, Tuple
 
-import numpy as np
+import numpy as np  # type: ignore
 
-from numpy.random import default_rng
-from numpy.random import Generator
+from numpy.random import default_rng, Generator  # type: ignore
 
 from gym_azul.agents.azul_agent import AzulAgent
 from gym_azul.game.game_calcs import free_pattern_line_tiles

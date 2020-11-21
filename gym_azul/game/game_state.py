@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from gym_azul.game.game_utils import TOTAL_COLORS, \
     TILES_PER_COLOR, TOTAL_SLOTS

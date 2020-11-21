@@ -1,9 +1,8 @@
 from typing import List
 
-import numpy as np
+import numpy as np  # type: ignore
 
-from numpy.random import default_rng
-from numpy.random._generator import Generator
+from numpy.random import default_rng, Generator  # type: ignore
 
 from gym_azul.agents.azul_agent import AzulAgent
 

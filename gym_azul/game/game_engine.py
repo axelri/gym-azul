@@ -1,8 +1,7 @@
 from typing import Dict, List, Tuple
 
-import numpy as np
-from numpy.random import default_rng
-from numpy.random._generator import Generator
+import numpy as np  # type: ignore
+from numpy.random import default_rng, Generator  # type: ignore
 
 from gym_azul.game.game_calcs import calc_move, is_next_round, \
     is_game_over, calc_wall_score, calc_bonus_points
@@ -202,7 +201,7 @@ class AzulGame:
         self.rounds_count += 1
 
     def action_handler(self, slot: int, color: int, line: int) -> Tuple[
-        float, Dict]:
+        float, Dict[str, int]]:
 
         if self.game_over:
             # Game over, return

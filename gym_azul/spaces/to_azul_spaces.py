@@ -1,6 +1,6 @@
 from typing import Tuple
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from gym_azul.game.game_state import AzulState, AzulPlayerState
 from gym_azul.game.game_utils import TOTAL_COLORS, TOTAL_LINES
@@ -138,6 +138,7 @@ def observation_from_state(state: AzulState) -> np.ndarray:
     # format requires channel to be first dimension
     # dstack makes this the last dimension
     return np.moveaxis(observation, 2, 0)
+
 
 def action_from_game_action(game_action: Tuple[int, int, int]) -> int:
     slot, color, line = game_action

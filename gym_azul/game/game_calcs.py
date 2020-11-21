@@ -1,6 +1,6 @@
 from typing import Tuple, List, Optional
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from gym_azul.game.game_state import AzulPlayerState
 from gym_azul.game.game_utils import wall_color_column, \

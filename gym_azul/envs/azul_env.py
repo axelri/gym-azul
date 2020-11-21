@@ -1,7 +1,7 @@
 from typing import Tuple, Dict, List, Optional
 
-import numpy as np
-from gym import logger
+import numpy as np  # type: ignore
+from gym import logger  # type: ignore
 
 from gym_azul.agents.greedy_agent import GreedyAgent
 from gym_azul.envs.mu_zero_env import MuzeroEnv
@@ -23,7 +23,7 @@ class AzulEnv(MuzeroEnv):
    """
     render_mode: str
     num_players: int
-    seed: List[int]
+    internal_seed: List[int]
     max_turns: int
     game: AzulGame
 
@@ -36,7 +36,7 @@ class AzulEnv(MuzeroEnv):
         self.render_mode = render_mode
         self.num_players = num_players
         self.max_turns = max_turns
-        self.seed = []
+        self.internal_seed = []
         self.expert_agent = GreedyAgent()
 
         self.action_space = action_space()
@@ -46,8 +46,8 @@ class AzulEnv(MuzeroEnv):
     def seed(self, seed: Optional[int] = None) -> List[int]:
         if seed is not None:
             set_seed = self.game.seed(seed)
-            self.seed = [set_seed]
-        return self.seed
+            self.internal_seed = [set_seed]
+        return self.internal_seed
 
     def step(self, action: int) -> Tuple[
         np.ndarray, float, bool, Dict[str, int]]:
@@ -57,7 +57,7 @@ class AzulEnv(MuzeroEnv):
             "round": self.get_round(),
             "player": self.to_play()
         }
-        move_info = {}
+        move_info: Dict[str, int] = {}
         slot, color, line = game_action_from_action(action)
 
         if self.is_done():

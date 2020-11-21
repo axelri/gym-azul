@@ -1,6 +1,6 @@
 from typing import List
 
-import gym
+import gym  # type: ignore
 
 
 class MuzeroEnv(gym.Env):

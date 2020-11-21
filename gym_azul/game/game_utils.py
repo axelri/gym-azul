@@ -1,5 +1,5 @@
 from typing import Dict, List, Tuple
-import numpy as np
+import numpy as np  # type: ignore
 
 TOTAL_LINES: int = 5
 
@@ -69,6 +69,6 @@ def generate_legal_actions(slots: np.ndarray) -> List[Tuple[int, int, int]]:
         for color in range(TOTAL_COLORS):
             if slots[slot, color] > 0:
                 for line in range(TOTAL_LINES):
-                    legal_actions.append([slot, color, line])
+                    legal_actions.append((slot, color, line))
 
     return legal_actions
