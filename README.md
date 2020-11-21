@@ -75,7 +75,7 @@ would be performed by the player.
 ```
 $ git clone git@github.com:riees/gym-azul.git
 $ cd gym-azul
-$ pip install -e .
+$ pip install -e src
 ```
 
 # Usage
@@ -97,7 +97,7 @@ while not done:
 ## Example run
 
 ```
-python azul_test.py 2 500 greedy
+python src/azul_test.py 2 500 greedy
 ```
 
 # Development
