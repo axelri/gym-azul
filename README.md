@@ -10,10 +10,12 @@ gym-azul is [Open AI Gym](https://github.com/openai/gym) implementation of the b
 2. [Rules](#Rules)
    1. [Legal actions](#Permitted-moves)
 3. [Environments](#Environments)
-   2. [Observations](#Observations)
-   3. [Actions](#Actions)
-   4. [Reward Function](#Reward-Function)
+   1. [Observations](#Observations)
+   2. [Actions](#Actions)
+   3. [Reward Function](#Reward-Function)
 4. [Installation](#Installation)
+   1. [Requirements](#Requirements)
+   2. [Using pip](#Using-pip)
 5. [Usage](#Usage)
 6. [Misc](#Misc)
    1. [Contribute](#Contribute)
@@ -57,7 +59,7 @@ would be performed by the player.
 
 # Installation
 
-## Requirements:
+## Requirements
 
 - Python 3.8+
 - OpenAI gym
