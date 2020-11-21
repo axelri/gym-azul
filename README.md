@@ -17,6 +17,8 @@ gym-azul is [Open AI Gym](https://github.com/openai/gym) implementation of the b
    1. [Requirements](#Requirements)
    2. [Using pip](#Using-pip)
 5. [Usage](#Usage)
+   1. [In code](#In-code)
+   2. [Example run](#Example-run)
 6. [Development](#Development)
    1. [Type checking](#Type-checking)
 7. [Misc](#Misc)
@@ -77,6 +79,8 @@ $ pip install -e .
 
 # Usage
 
+## In code
+
 ```python
 import gym
 
@@ -87,6 +91,12 @@ while not done:
     action = ... # Your agent code here
     obs, reward, done, _ = env.step(action)
     env.render()
+```
+
+## Example run
+
+```
+python azul_test.py 2 500 greedy
 ```
 
 # Development
