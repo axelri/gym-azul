@@ -1,10 +1,8 @@
 from typing import List
+import numpy as np  # type: ignore
 
 from gym_azul.game.game_utils import TOTAL_COLORS, \
     max_tiles_for_line, wall_column_color
-
-import numpy as np  # type: ignore
-
 from gym_azul.spaces.from_azul_spaces import game_action_from_action
 
 

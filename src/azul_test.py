@@ -1,8 +1,7 @@
 import gym
 import sys
 
-from gym_azul.agents.greedy_agent import GreedyAgent
-from gym_azul.agents.random_agent import RandomAgent
+from gym_azul.agents import GreedyAgent, RandomAgent
 from gym_azul.envs import AzulEnv
 from gym_azul.spaces.from_azul_spaces import game_action_from_action
 from gym_azul.util.format_utils import format_action
