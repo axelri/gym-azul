@@ -17,7 +17,9 @@ gym-azul is [Open AI Gym](https://github.com/openai/gym) implementation of the b
    1. [Requirements](#Requirements)
    2. [Using pip](#Using-pip)
 5. [Usage](#Usage)
-6. [Misc](#Misc)
+6. [Development](#Development)
+   1. [Type checking](#Type-checking)
+7. [Misc](#Misc)
    1. [Contribute](#Contribute)
    2. [Credits](#Credits)
    
@@ -86,6 +88,24 @@ while not done:
     obs, reward, done, _ = env.step(action)
     env.render()
 ```
+
+# Development
+
+## Type checking
+
+This project uses [mypy](http://mypy-lang.org/) to validate type hints. 
+To run it first install mypy:
+
+```
+$ pip install mypy
+```
+
+Then run it against the source code:
+```
+mypy gym_azul
+```
+
+# Misc
 
 ## Contribute
 
