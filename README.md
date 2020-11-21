@@ -1,6 +1,7 @@
 # gym-azul
 
-gym-azul is [Open AI Gym](https://github.com/openai/gym) implementation of the board game [Azul](https://en.wikipedia.org/wiki/Azul_(board_game)).
+gym-azul is [Open AI Gym](https://github.com/openai/gym) implementation of the board game [Azul](https://en.wikipedia.org/wiki/Azul_(board_game)). The observation and action formats are designed to
+work well with [muzero-general](https://github.com/werner-duvaud/muzero-general).
 
 ## Table of Contents
 
