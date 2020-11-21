@@ -3,14 +3,13 @@ from typing import Tuple, Dict, List, Optional
 import numpy as np  # type: ignore
 from gym import logger  # type: ignore
 
-from gym_azul.agents.greedy_agent import GreedyAgent
+from gym_azul.agents import GreedyAgent
 from gym_azul.envs.mu_zero_env import MuzeroEnv
-from gym_azul.game.game_engine import AzulGame
-from gym_azul.spaces.azul_spaces import observation_space, action_space
-from gym_azul.spaces.from_azul_spaces import game_action_from_action
-from gym_azul.spaces.to_azul_spaces import observation_from_state, \
-    action_from_game_action
-from gym_azul.util.format_utils import format_observation
+from gym_azul.game import AzulGame
+from gym_azul.model import observation_space, action_space, \
+    observation_from_state, action_from_action_num, \
+    action_num_from_action
+from gym_azul.util.format_utils import format_state
 
 
 class AzulEnv(MuzeroEnv):
@@ -23,20 +22,31 @@ class AzulEnv(MuzeroEnv):
    """
     render_mode: str
     num_players: int
+    advanced: bool
     internal_seed: List[int]
     max_turns: int
     game: AzulGame
 
     metadata = {"render.modes": ["human"]}
 
-    def __init__(self, render_mode: str = "human", num_players: int = 2,
-        max_turns: int = 500) -> None:
-        super(AzulEnv, self).__init__()
+    def __init__(
+        self,
+        seed: Optional[int] = None,
+        render_mode: str = "human",
+        num_players: int = 2,
+        advanced: bool = False,
+        max_turns: int = 500
+    ) -> None:
+        super().__init__()
 
         self.render_mode = render_mode
         self.num_players = num_players
+        self.advanced = advanced
         self.max_turns = max_turns
-        self.internal_seed = []
+        if seed is None:
+            self.internal_seed = []
+        else:
+            self.internal_seed = [seed]
         self.expert_agent = GreedyAgent()
 
         self.action_space = action_space()
@@ -49,8 +59,10 @@ class AzulEnv(MuzeroEnv):
             self.internal_seed = [set_seed]
         return self.internal_seed
 
-    def step(self, action: int) -> Tuple[
-        np.ndarray, float, bool, Dict[str, int]]:
+    def step(
+        self,
+        action_num: int
+    ) -> Tuple[np.ndarray, float, bool, Dict[str, int]]:
         reward = 0.0
         info_before = {
             "turn": self.get_turn(),
@@ -58,13 +70,13 @@ class AzulEnv(MuzeroEnv):
             "player": self.to_play()
         }
         move_info: Dict[str, int] = {}
-        slot, color, line = game_action_from_action(action)
+        action = action_from_action_num(action_num)
 
         if self.is_done():
             logger.warn(
                 "Game over, call reset. Undefined action.")
         else:
-            reward, move_info = self.game.action_handler(slot, color, line)
+            reward, move_info = self.game.action_handler(action)
 
         info_after = {
             "next_turn": self.get_turn(),
@@ -81,24 +93,23 @@ class AzulEnv(MuzeroEnv):
         return self.get_observation()
 
     def render(self, mode="human"):
-        observation = self.get_observation()
         print(f"Next turn: {self.get_turn()}")
         print(f"Next round: {self.get_round()}")
         print(f"Next player: {self.to_play()}")
-        print(format_observation(observation))
+        print(format_state(self.game.state))
 
     def close(self) -> None:
         pass
 
     def to_play(self) -> int:
-        return self.game.current_player
+        return self.game.state.player
 
     def legal_actions(self) -> List[int]:
-        parsed_legal_actions = self.game.legal_actions()
-        legal_actions = [action_from_game_action(action) for action in
-                         parsed_legal_actions]
+        legal_actions = self.game.legal_actions()
+        legal_action_nums = [action_num_from_action(action) for action in
+                             legal_actions]
 
-        return legal_actions
+        return legal_action_nums
 
     def expert_action(self) -> int:
         return self.expert_agent.act(self.to_play(),
@@ -110,12 +121,12 @@ class AzulEnv(MuzeroEnv):
 
     def is_done(self) -> bool:
         game_over = self.game.game_over
-        too_many_turns = (self.game.turns_count > self.max_turns)
+        too_many_turns = (self.game.state.turn > self.max_turns)
         legal_actions = len(self.legal_actions())
         return game_over or too_many_turns or legal_actions == 0
 
     def get_round(self) -> int:
-        return self.game.rounds_count
+        return self.game.state.round
 
     def get_turn(self) -> int:
-        return self.game.turns_count
+        return self.game.state.turn
