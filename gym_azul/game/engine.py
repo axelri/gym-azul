@@ -266,6 +266,6 @@ class AzulGame:
         if is_next_round(slots):
             self.next_round()
 
-        move_info = {}
+        move_info: Dict[str, int] = {}
 
         return ActionResult(float(reward), move_info)

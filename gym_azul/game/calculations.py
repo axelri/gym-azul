@@ -213,8 +213,8 @@ def calc_place_pattern_line(
     # calculate score after placement
     if amount == free_tiles:
         next_pattern_lines = copy.deepcopy(pattern_lines)
-        next_pattern_lines[line].color = color
-        next_pattern_lines[line].amount = max_tiles_for_line(line)
+        next_pattern_lines[line].color = ColorTile(color)
+        next_pattern_lines[line].amount = LineAmount(max_tiles_for_line(line))
         round_score_after, bonus_score_after = calc_score(
             wall, next_pattern_lines)
 
