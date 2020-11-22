@@ -1,14 +1,13 @@
-from typing import List, Tuple, Optional, NamedTuple
+from typing import List, Optional, NamedTuple
 
 import numpy as np  # type: ignore
-
 from numpy.random import default_rng, Generator  # type: ignore
 
 from gym_azul.agents.azul_agent import AzulAgent
+from gym_azul.constants import Slot, \
+    Line
 from gym_azul.game import free_pattern_line_tiles, wall_color_column
 from gym_azul.model import AzulState, AzulPlayerState, Color
-from gym_azul.constants import TOTAL_SLOTS, TOTAL_COLORS, TOTAL_LINES, Slot, \
-    Line
 from gym_azul.model import state_from_observation, action_num_from_action, \
     Action
 
@@ -57,22 +56,21 @@ class GreedyAgent(AzulAgent):
         # Put in largest pattern line
         for line in reversed(Line):
             for slot, color, amount in piles:
+                allowed_column = wall_color_column(color, line)
+
                 free_tiles = free_pattern_line_tiles(
-                    wall, pattern_lines, color, line)
+                    wall, pattern_lines, color, line, allowed_column)
 
                 # if we can place, then do it!
                 if free_tiles > 0:
-                    # TODO: handle advanced
-                    allowed_column = wall_color_column(color, line)
-                    action = Action(slot, color, line, allowed_column)
+                    action = Action(slot, color, line)
                     return action_num_from_action(action)
 
         # If we can't place anything, take the smallest pile
         piles.reverse()
         slot, color, _amount = piles[0]
         line = Line.LINE_1
-        allowed_column = wall_color_column(color, line)
-        action = Action(slot, color, line, allowed_column)
+        action = Action(slot, color, line)
         action_num = action_num_from_action(action)
 
         if action_num not in legal_actions:

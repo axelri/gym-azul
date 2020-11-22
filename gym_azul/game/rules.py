@@ -1,6 +1,6 @@
 from typing import List, Dict, cast
 
-from gym_azul.constants.constants import TOTAL_COLUMNS, Color, \
+from gym_azul.constants.constants import Color, \
     Slot, Line, Column, ColorTile
 from gym_azul.model import Action
 
@@ -28,17 +28,29 @@ def wall_column_color(column: Column, line: Line) -> int:
 
 def can_place_tile(
     wall: List[List[ColorTile]],
-    action: Action,
+    color: Color,
+    line: Line,
+    column: Column,
+    advanced=False
 ) -> bool:
-    slot, color, line, column = action
-    for wall_line in Line:
-        if wall[wall_line][column] == cast(ColorTile, color):
-            # color is already in same column
+    if advanced:
+        for wall_line in Line:
+            if wall[wall_line][column] == cast(ColorTile, color):
+                # color is already in same column
+                return False
+
+        for wall_column in Column:
+            if wall[line][wall_column] == cast(ColorTile, color):
+                # color is already in same line
+                return False
+    else:
+        fixed_column = wall_color_column(color, line)
+        if column != fixed_column:
+            # fixed columns in basic mode
             return False
 
-    for wall_column in Column:
-        if wall[line][wall_column] == cast(ColorTile, color):
-            # color is already in same line
+        if wall[line][column] == cast(ColorTile, color):
+            # color is already placed in fixed position
             return False
 
     return True
@@ -46,35 +58,20 @@ def can_place_tile(
 
 def generate_legal_actions(
     slots: List[Dict[Color, int]],
-    wall: List[List[ColorTile]],
     advanced=False
 ) -> List[Action]:
     """
     Illegal actions:
     1. Pick a color from a slot with no tiles of that color
-    2. Place a tile on the wall where this tile has already been placed
     """
     legal_actions = []
     for slot_idx, slot in enumerate(slots):
         for color, amount in slot.items():
             for line in Line:
-                if advanced:
-                    # We can place our tile on the wall column we choose
-                    for column in range(TOTAL_COLUMNS):
-                        action = Action(Slot(slot_idx),
-                                        Color(color),
-                                        line,
-                                        Column(column))
-                        if amount > 0 and can_place_tile(wall, action):
-                            legal_actions.append(action)
-                else:
-                    if amount > 0:
-                        # We can only place the tile on a fixed column
-                        allowed_column = wall_color_column(color, line)
-                        legal_actions.append(
-                            Action(Slot(slot_idx),
-                                   Color(color),
-                                   line,
-                                   Column(allowed_column)))
+                if amount > 0:
+                    legal_actions.append(
+                        Action(Slot(slot_idx),
+                               Color(color),
+                               line))
 
     return legal_actions

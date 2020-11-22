@@ -8,7 +8,7 @@ from gym_azul.envs.mu_zero_env import MuzeroEnv
 from gym_azul.game import AzulGame
 from gym_azul.model import observation_space, action_space, \
     observation_from_state, action_from_action_num, \
-    action_num_from_action
+    action_num_from_action, Player
 from gym_azul.util.format_utils import format_state
 
 
@@ -34,14 +34,12 @@ class AzulEnv(MuzeroEnv):
         seed: Optional[int] = None,
         render_mode: str = "human",
         num_players: int = 2,
-        advanced: bool = False,
         max_turns: int = 500
     ) -> None:
         super().__init__()
 
         self.render_mode = render_mode
         self.num_players = num_players
-        self.advanced = advanced
         self.max_turns = max_turns
         if seed is None:
             self.internal_seed = []
@@ -51,7 +49,7 @@ class AzulEnv(MuzeroEnv):
 
         self.action_space = action_space()
         self.observation_space = observation_space(self.num_players)
-        self.game = AzulGame(num_players=self.num_players)
+        self.game = AzulGame(num_players=self.num_players, advanced=False)
 
     def seed(self, seed: Optional[int] = None) -> List[int]:
         if seed is not None:
@@ -89,7 +87,7 @@ class AzulEnv(MuzeroEnv):
         return self.get_observation(), reward, self.is_done(), info
 
     def reset(self) -> np.ndarray:
-        self.game.reset(start_player=0)
+        self.game.reset(start_player=Player.PLAYER_1)
         return self.get_observation()
 
     def render(self, mode="human"):
@@ -102,7 +100,7 @@ class AzulEnv(MuzeroEnv):
         pass
 
     def to_play(self) -> int:
-        return self.game.state.player
+        return self.game.state.current_player
 
     def legal_actions(self) -> List[int]:
         legal_actions = self.game.legal_actions()

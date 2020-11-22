@@ -5,7 +5,7 @@ from gym import spaces, Space  # type: ignore
 
 from gym_azul.constants import get_num_factories, MAX_POINTS, TILES_PER_COLOR, \
     TOTAL_COLORS, TILES_PER_FACTORY, Tile, FLOOR_LINE_SIZE, TOTAL_LINES, \
-    TOTAL_COLUMNS, ColorTile
+    TOTAL_COLUMNS, ColorTile, MAX_PLAYERS
 
 
 def wall_matrix() -> Tuple[np.ndarray, np.ndarray]:
@@ -108,6 +108,7 @@ def player_turn_matrix() -> Tuple[np.ndarray, np.ndarray]:
 def player_channel() -> Tuple[np.ndarray, np.ndarray]:
     """
     10 x 10
+    All values are PLAYER_INACTIVE_OBS = 7 if player is not in game
 
     Layout:
     | Row | Col 0-4       | Col 5-9         |
@@ -297,18 +298,18 @@ def board_channel(num_players: int) -> Tuple[np.ndarray, np.ndarray]:
 def observation_space(num_players: int) -> Space:
     """
     Matrix:
-    N+1 x 10 x 10
+    5 x 10 x 10
 
     | Channel | Row 0-9, Col 0-9 |
     |---------|------------------|
-    | 1       | Player 1         |
+    | 0       | Player 1         |
     | ...     |                  |
-    | N       | Player N + 1     |
-    | N+1     | Shared Board     |
+    | 3       | Player 4         |
+    | 4       | Shared Board     |
     """
     player_low, player_high = player_channel()
-    players_low = [player_low] * num_players
-    players_high = [player_high] * num_players
+    players_low = [player_low] * MAX_PLAYERS
+    players_high = [player_high] * MAX_PLAYERS
     board_low, board_high = board_channel(num_players)
 
     low = [
@@ -324,7 +325,7 @@ def observation_space(num_players: int) -> Space:
     # Format: (channel, height, width)
     observation_low = np.moveaxis(np.dstack(low), 2, 0)
     observation_high = np.moveaxis(np.dstack(high), 2, 0)
-    observation_shape = (num_players + 1, 10, 10)
+    observation_shape = (MAX_PLAYERS + 1, 10, 10)
 
     return spaces.Box(
         low=observation_low,
