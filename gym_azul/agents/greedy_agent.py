@@ -63,6 +63,8 @@ class GreedyAgent(AzulAgent):
 
                 # if we can place, then do it!
                 if free_tiles > 0:
+                    print("Free tiles")
+                    print(free_tiles)
                     action = Action(slot, color, line)
                     return action_num_from_action(action)
 
