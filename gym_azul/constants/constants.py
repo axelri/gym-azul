@@ -2,6 +2,36 @@ from enum import IntEnum
 from typing import Dict, List
 
 
+class NumPlayers(IntEnum):
+    PLAYERS_2 = 2
+    PLAYERS_3 = 3
+    PLAYERS_4 = 4
+
+
+class Player(IntEnum):
+    PLAYER_1 = 0
+    PLAYER_2 = 1
+    PLAYER_3 = 2
+    PLAYER_4 = 3
+
+
+class LineAmount(IntEnum):
+    AMOUNT_0 = 0
+    AMOUNT_1 = 1
+    AMOUNT_2 = 2
+    AMOUNT_3 = 3
+    AMOUNT_4 = 4
+    AMOUNT_5 = 5
+
+
+class StartingMarker(IntEnum):
+    PLAYER_1 = 0
+    PLAYER_2 = 1
+    PLAYER_3 = 2
+    PLAYER_4 = 3
+    CENTER = 4
+
+
 class Tile(IntEnum):
     BLUE = 0
     YELLOW = 1
@@ -105,6 +135,8 @@ NUM_FACTORIES: Dict[int, int] = {
 }
 
 PENALTIES: List[int] = [1, 1, 2, 2, 2, 3, 3]
+
+PLAYER_INACTIVE_OBS: int = -1
 
 
 def get_num_factories(num_players: int) -> int:

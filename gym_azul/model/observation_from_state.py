@@ -3,7 +3,7 @@ from typing import List, Dict
 import numpy as np  # type: ignore
 
 from gym_azul.constants import TOTAL_LINES, TOTAL_COLUMNS, ColorTile, Tile, \
-    Color, TOTAL_SLOTS, TOTAL_COLORS
+    Color, TOTAL_SLOTS, TOTAL_COLORS, Player, PLAYER_INACTIVE_OBS
 from gym_azul.model.state import AzulState, AzulPlayerState, PatternLine
 
 
@@ -62,18 +62,22 @@ def obs_player_turn(state_has_next_turn: bool) -> np.ndarray:
 
 
 def player_channel(
-    player: AzulPlayerState,
+    player_state: AzulPlayerState,
     has_starting_marker: bool,
-    has_next_turn: bool
+    has_next_turn: bool,
+    player_in_game: bool
 ) -> np.ndarray:
     """
     10 x 10
     """
 
-    pattern_lines = obs_pattern_lines(player.pattern_lines)
-    wall = obs_wall(player.wall)
-    floor_line = obs_floor_line(player.floor_line)
-    points = obs_points(player.points)
+    if not player_in_game:
+        return np.full((10, 10), PLAYER_INACTIVE_OBS, dtype=np.int32)
+
+    pattern_lines = obs_pattern_lines(player_state.pattern_lines)
+    wall = obs_wall(player_state.wall)
+    floor_line = obs_floor_line(player_state.floor_line)
+    points = obs_points(player_state.points)
     starting_marker = obs_starting_marker(has_starting_marker)
     next_turn = obs_player_turn(has_next_turn)
 
@@ -150,22 +154,25 @@ def board_channel(
 
 def observation_from_state(state: AzulState) -> np.ndarray:
     """
-    N+1 x 10 x 10
+    5 x 10 x 10
     """
     starting_marker = state.starting_marker
 
-    players = []
-    for player_idx, player in enumerate(state.players):
-        players.append(player_channel(
-            player,
-            starting_marker == player_idx,
-            state.player == player_idx
-        ))
+    player_obs: List[np.ndarray] = []
+    for player in Player:
+        player_state = state.players[player]
+        player_obs.append(
+            player_channel(
+                player_state,
+                starting_marker == player,
+                state.current_player == player,
+                player < state.num_players
+            ))
+    board_obs: np.ndarray = board_channel(state.slots, state.bag, state.lid)
 
-    board = board_channel(state.slots, state.bag, state.lid)
-
-    observation = np.dstack((*players, board))
+    observation = np.dstack((*player_obs, board_obs))
+    moved_axis = np.moveaxis(observation, 2, 0)
 
     # format requires channel to be first dimension
     # dstack makes this the last dimension
-    return np.moveaxis(observation, 2, 0)
+    return moved_axis

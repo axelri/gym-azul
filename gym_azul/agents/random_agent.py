@@ -4,6 +4,7 @@ import numpy as np  # type: ignore
 
 from numpy.random import default_rng, Generator  # type: ignore
 
+from gym_azul.constants import Player
 from gym_azul.agents.azul_agent import AzulAgent
 
 
@@ -22,7 +23,7 @@ class RandomAgent(AzulAgent):
 
     def act(
         self,
-        player: int,
+        player: Player,
         legal_actions: List[int],
         observation: np.ndarray
     ) -> int:

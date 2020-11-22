@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Optional, cast
+from typing import Dict, List, Tuple, Optional
 
 from numpy.random import default_rng, Generator  # type: ignore
 
@@ -10,21 +10,22 @@ from gym_azul.game.calculations import calc_move, is_next_round, is_game_over, \
 from gym_azul.game.move_model import PlacePattern, ActionResult, \
     PlaceFloorLine
 from gym_azul.game.rules import generate_legal_actions, wall_color_column
-from gym_azul.model import Action, new_state, AzulState, new_floor_line
+from gym_azul.model import Action, new_state, AzulState, new_floor_line, Player, \
+    LineAmount, FloorLineTile, NumPlayers, StartingMarker
 
 
 class AzulGame:
     random: Generator
-    num_players: int
+    num_players: NumPlayers
     advanced: bool
     state: AzulState
     game_over: bool
 
     def __init__(
         self,
-        num_players: int,
+        num_players: NumPlayers,
         seed: Optional[int] = None,
-        start_player: int = 0,
+        start_player: Player = Player.PLAYER_1,
         advanced: bool = False
     ) -> None:
         if seed is None:
@@ -34,7 +35,7 @@ class AzulGame:
 
         self.num_players = num_players
         self.advanced = advanced
-        self.state = new_state(num_players, start_player)
+        self.state = new_state(self.num_players, start_player)
         self.game_over = False
 
     def seed(self, seed: int) -> int:
@@ -44,7 +45,7 @@ class AzulGame:
         self.random = default_rng(seed)
         return seed
 
-    def reset(self, start_player: int = 0) -> None:
+    def reset(self, start_player: Player = Player.PLAYER_1) -> None:
         self.state = new_state(self.num_players, start_player)
         self.game_over = False
         self.next_round()
@@ -52,7 +53,6 @@ class AzulGame:
     def legal_actions(self) -> List[Action]:
         return generate_legal_actions(
             self.state.slots,
-            self.state.players[self.state.player].wall,
             advanced=self.advanced)
 
     def play_turn(
@@ -65,10 +65,10 @@ class AzulGame:
         """
         Modify board with action
         """
-        slot, color, line, column = action
+        slot, color, line = action
         place_line, place_color, place_amount = place_pattern_line
         slots = self.state.slots
-        player_state = self.state.players[self.state.player]
+        player_state = self.state.players[self.state.current_player]
 
         # Draw from slot
         slots[slot][color] = 0
@@ -81,8 +81,10 @@ class AzulGame:
         # Put in pattern line if putting > 0 tiles
         pattern_lines = player_state.pattern_lines
         if place_amount > 0:
-            pattern_lines[place_line].color = place_color
-            pattern_lines[place_line].amount += place_amount
+            pattern_lines[place_line].color = ColorTile(place_color)
+            old_amount = pattern_lines[place_line].amount
+            pattern_lines[place_line].amount = LineAmount(
+                old_amount + place_amount)
 
         # Put in floor line
         floor_line = player_state.floor_line
@@ -90,15 +92,17 @@ class AzulGame:
             floor_line[column] = floor_line_color
             # Player took starting token
             if floor_line_color == Tile.STARTING_TOKEN.value:
-                self.state.starting_marker = self.state.player
+                self.state.starting_marker = StartingMarker(
+                    self.state.current_player)
 
         # Discard to lid
         for discard_tile in discard:
             if discard_tile == Tile.STARTING_TOKEN.value:
                 # Player took starting token
-                self.state.starting_marker = self.state.player
+                self.state.starting_marker = StartingMarker(
+                    self.state.current_player)
             else:
-                self.state.lid[cast(Color, discard_tile)] += 1
+                self.state.lid[Color(discard_tile)] += 1
 
     def process_players_new_round(self) -> None:
         """
@@ -116,35 +120,37 @@ class AzulGame:
 
                 # place, score and discard if full pattern line
                 if line_amount == max_tiles:
-                    line_color = cast(Color, line_color_tile)
+                    line_color = Color(line_color_tile)
                     # calculate score
+                    # TODO: advanced mode, choose a column
+                    wall_column = wall_color_column(line_color, line)
                     round_score_delta, _ = calc_wall_score(
-                        wall, pattern_lines, line_color, line, deep_check=False)
+                        wall, pattern_lines, line_color,
+                        line, wall_column, deep_check=False)
                     player_board.points += round_score_delta
 
                     # place one tile on wall
-                    # TODO: advanced mode, choose a column
-                    wall_column = wall_color_column(line_color, line)
-                    wall[line][wall_column] = cast(ColorTile, line_color)
+                    wall[line][wall_column] = ColorTile(line_color)
 
                     # place rest of tiles in lid
                     self.state.lid[line_color] += (line_amount - 1)
 
                     # clear pattern lines
                     pattern_lines[line].color = ColorTile.EMPTY
-                    pattern_lines[line].amount = 0
+                    pattern_lines[line].amount = LineAmount.AMOUNT_0
 
-            for column, tile in enumerate(player_board.floor_line):
+            for floor_line_tile in FloorLineTile:
+                tile = player_board.floor_line[floor_line_tile]
                 # ignore starting marker
                 if tile != Tile.EMPTY:
                     # calculate penalty
-                    penalty = PENALTIES[column]
+                    penalty = PENALTIES[floor_line_tile]
                     # do not go below zero points
                     player_board.points = max(0, player_board.points - penalty)
 
                     # discard to lid
                     if tile != Tile.STARTING_TOKEN:
-                        self.state.lid[cast(Color, tile)] += 1
+                        self.state.lid[Color(tile)] += 1
 
             player_board.floor_line = new_floor_line()
 
@@ -194,7 +200,7 @@ class AzulGame:
                 for lid_color in Color:
                     lid[lid_color] = 0
 
-        self.state.starting_marker = STARTING_MARKER_CENTER
+        self.state.starting_marker = StartingMarker.CENTER
 
     def next_round(self) -> None:
         """
@@ -207,7 +213,8 @@ class AzulGame:
 
         if is_game_over(players):
             self.game_over = True
-            for player_board in players:
+            for player in Player:
+                player_board = players[player]
                 bonus = calc_bonus_points(player_board.wall)
                 player_board.points += bonus
             return
@@ -216,10 +223,10 @@ class AzulGame:
 
         # set next player to who has the starting marker
         starting_marker = self.state.starting_marker
-        if starting_marker != STARTING_MARKER_CENTER:
-            self.state.player = starting_marker
+        if starting_marker != StartingMarker.CENTER:
+            self.state.current_player = Player(starting_marker)
         # reset starting marker to center
-        self.state.starting_marker = STARTING_MARKER_CENTER
+        self.state.starting_marker = StartingMarker.CENTER
         self.state.round += 1
 
     def action_handler(self, action: Action) -> Tuple[float, Dict[str, int]]:
@@ -229,14 +236,15 @@ class AzulGame:
 
         starting_marker = self.state.starting_marker
 
-        player_board = self.state.players[self.state.player]
+        player_board = self.state.players[self.state.current_player]
         slots = self.state.slots
 
         result = calc_move(
             player_board,
             slots,
             starting_marker == STARTING_MARKER_CENTER,
-            action)
+            action,
+            self.advanced)
 
         if result is None:
             # Invalid action, do not update
@@ -258,7 +266,8 @@ class AzulGame:
         move_reward_capped = max(move_reward, -points)
 
         self.state.turn += 1
-        self.state.player = (self.state.player + 1) % self.num_players
+        next_player = (self.state.current_player + 1) % self.num_players
+        self.state.current_player = Player(next_player)
 
         if is_next_round(slots):
             self.next_round()

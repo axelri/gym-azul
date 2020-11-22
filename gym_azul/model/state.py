@@ -1,26 +1,26 @@
 from dataclasses import dataclass, field
 from typing import List, Dict
 
-from gym_azul.constants import MAX_PLAYERS, TOTAL_SLOTS, TILES_PER_COLOR, \
-    Tile, ColorTile, TOTAL_LINES, TOTAL_COLUMNS, FLOOR_LINE_SIZE, Color
+from gym_azul.constants import TILES_PER_COLOR, \
+    Tile, ColorTile, Color, Player, \
+    StartingMarker, Slot, FloorLineTile, Line, Column, LineAmount, NumPlayers
 
 
 @dataclass
 class PatternLine:
     color: ColorTile
-    amount: int
+    amount: LineAmount
 
 
 def new_pattern_lines() -> List[PatternLine]:
-    return [PatternLine(ColorTile.EMPTY, 0) for _line in
-            range(TOTAL_LINES)]
+    return [PatternLine(ColorTile.EMPTY, LineAmount.AMOUNT_0) for _line in Line]
 
 
 def new_wall() -> List[List[ColorTile]]:
     wall = []
-    for line in range(TOTAL_LINES):
+    for _line in Line:
         wall_line = []
-        for column in range(TOTAL_COLUMNS):
+        for _column in Column:
             wall_line.append(ColorTile.EMPTY)
         wall.append(wall_line)
 
@@ -28,7 +28,7 @@ def new_wall() -> List[List[ColorTile]]:
 
 
 def new_floor_line() -> List[Tile]:
-    return [Tile.EMPTY for _column in range(FLOOR_LINE_SIZE)]
+    return [Tile.EMPTY for _tile in FloorLineTile]
 
 
 def new_bag() -> Dict[Color, int]:
@@ -40,7 +40,7 @@ def new_lid() -> Dict[Color, int]:
 
 
 def new_slots() -> List[Dict[Color, int]]:
-    return [{color: 0 for color in Color} for _slot in range(TOTAL_SLOTS)]
+    return [{color: 0 for color in Color} for _slot in Slot]
 
 
 @dataclass
@@ -63,12 +63,15 @@ class AzulState:
     slots: List[Dict[Color, int]] = field(default_factory=new_slots)
     bag: Dict[Color, int] = field(default_factory=new_bag)
     lid: Dict[Color, int] = field(default_factory=new_lid)
-    starting_marker: int = MAX_PLAYERS
-    player: int = 0
+    starting_marker: StartingMarker = StartingMarker.CENTER
+    current_player: Player = Player.PLAYER_1
+    num_players: NumPlayers = NumPlayers.PLAYERS_2
     turn: int = 0
     round: int = 0
 
 
-def new_state(num_players: int, start_player: int):
-    players = [AzulPlayerState() for _player in range(num_players)]
-    return AzulState(players, player=start_player)
+def new_state(num_players: NumPlayers, start_player: Player):
+    players = [AzulPlayerState() for _player in Player]
+    return AzulState(players=players,
+                     num_players=num_players,
+                     current_player=start_player)

@@ -24,7 +24,7 @@ if __name__ == "__main__":
         episode_done = False
         observation = env.reset()
         print("Initial board")
-        print(env.render())
+        env.render()
 
         step = 0
         for step in range(2000):
@@ -40,7 +40,8 @@ if __name__ == "__main__":
                 observation, reward, done, info = env.step(action)
                 print(f"Action: {format_action_num(action)}")
                 print(f"Info  : {info}")
-                print(env.render())
+                env.render()
+                print()
 
             if done:
                 episode_done = True

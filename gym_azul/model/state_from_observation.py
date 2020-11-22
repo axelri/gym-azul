@@ -2,31 +2,32 @@ from typing import Tuple, List, Dict
 
 import numpy as np  # type: ignore
 
+from gym_azul.constants import STARTING_MARKER_CENTER, ColorTile, \
+    Tile, Color, Line, Column, LineAmount, FloorLineTile, Slot, Player, \
+    PLAYER_INACTIVE_OBS, NumPlayers, StartingMarker
 from gym_azul.model.state import AzulState, AzulPlayerState, PatternLine
-from gym_azul.constants import TOTAL_LINES, STARTING_MARKER_CENTER, ColorTile, \
-    TOTAL_COLUMNS, Tile, FLOOR_LINE_SIZE, Color, TOTAL_SLOTS, TOTAL_COLORS
 
 
 def state_pattern_lines(obs_pattern_lines: np.ndarray) -> List[PatternLine]:
     pattern_lines = []
-    for line in range(TOTAL_LINES):
+    for line in Line:
         color = obs_pattern_lines[line, 0]
         amount = 0
         if color != ColorTile.EMPTY:
             # do not count unset values
-            for column in range(TOTAL_COLUMNS):
+            for column in Column:
                 if obs_pattern_lines[line, column] == color:
                     amount += 1
-        pattern_lines.append(PatternLine(color, amount))
+        pattern_lines.append(PatternLine(color, LineAmount(amount)))
 
     return pattern_lines
 
 
 def state_wall(obs_wall: np.ndarray) -> List[List[ColorTile]]:
     wall = []
-    for line in range(TOTAL_LINES):
+    for line in Line:
         wall_line = []
-        for column in range(TOTAL_COLUMNS):
+        for column in Column:
             color = obs_wall[line, column]
             wall_line.append(ColorTile(color))
         wall.append(wall_line)
@@ -36,7 +37,7 @@ def state_wall(obs_wall: np.ndarray) -> List[List[ColorTile]]:
 
 def state_floor_line(obs_floor_line: np.ndarray) -> List[Tile]:
     floor_line = []
-    for tile in range(FLOOR_LINE_SIZE):
+    for tile in FloorLineTile:
         tile_value = obs_floor_line[tile, 0]
         floor_line.append(Tile(tile_value))
     return floor_line
@@ -56,7 +57,10 @@ def state_next_turn(obs_next_turn: np.ndarray) -> bool:
 
 def player_state(
     player_observation: np.ndarray
-) -> Tuple[AzulPlayerState, bool, bool]:
+) -> Tuple[AzulPlayerState, bool, bool, bool]:
+    if player_observation[0, 0] == PLAYER_INACTIVE_OBS:
+        return AzulPlayerState(), False, False, False
+
     obs_pattern_lines = player_observation[0:5, 0:5]
     obs_wall = player_observation[5:10, 0:5]
     obs_floor_line = player_observation[0:7, 5:10]
@@ -73,51 +77,55 @@ def player_state(
 
     state = AzulPlayerState(points, pattern_lines, wall, floor_line)
 
-    return state, has_starting_marker, has_next_turn
+    return state, has_starting_marker, has_next_turn, True
 
 
 def slots_state(obs_slots: np.ndarray) -> List[Dict[Color, int]]:
     slots = []
-    for slot in range(TOTAL_SLOTS):
+    for slot in Slot:
         slot_dict: Dict[Color, int] = {}
-        for color in range(TOTAL_COLORS):
-            slot_dict[Color(color)] = obs_slots[slot, color]
+        for color in Color:
+            slot_dict[color] = obs_slots[slot, color]
         slots.append(slot_dict)
     return slots
 
 
 def bag_state(obs_bag: np.ndarray) -> Dict[Color, int]:
     bag: Dict[Color, int] = {}
-    for color in range(TOTAL_COLORS):
+    for color in Color:
         bag_value = obs_bag[color, 0]
-        bag[Color(color)] = bag_value
+        bag[color] = bag_value
     return bag
 
 
 def lid_state(obs_lid: np.ndarray) -> Dict[Color, int]:
     lid: Dict[Color, int] = {}
-    for color in range(TOTAL_COLORS):
+    for color in Color:
         lid_value = obs_lid[color, 0]
-        lid[Color(color)] = lid_value
+        lid[color] = lid_value
     return lid
 
 
 def state_from_observation(observation: np.ndarray) -> AzulState:
     channels, _, _ = observation.shape
 
-    num_players = channels - 1
-    starting_marker = STARTING_MARKER_CENTER
-    player = 0
+    starting_marker = StartingMarker.CENTER
+    current_player = Player.PLAYER_1
+
+    num_players = 0
 
     players = []
-    for player_idx in range(num_players):
-        player_channel = observation[player_idx, :, :]
-        state, has_starting_token, has_next_turn = player_state(player_channel)
+    for player in Player:
+        player_channel = observation[player, :, :]
+        state, has_starting_token, has_next_turn, is_active = player_state(
+            player_channel)
         players.append(state)
         if has_starting_token:
-            starting_marker = player_idx
+            starting_marker = StartingMarker(player)
         if has_next_turn:
-            player = player_idx
+            current_player = player
+        if is_active:
+            num_players += 1
 
     slots_obs = observation[-1, 0:10, 0:5]
     bag_obs = observation[-1, 0:5, 5:10]
@@ -127,6 +135,7 @@ def state_from_observation(observation: np.ndarray) -> AzulState:
     bag = bag_state(bag_obs)
     lid = lid_state(lid_obs)
 
-    azul_state = AzulState(players, slots, bag, lid, starting_marker, player)
+    azul_state = AzulState(players, slots, bag, lid, starting_marker,
+                           current_player, NumPlayers(num_players))
 
     return azul_state

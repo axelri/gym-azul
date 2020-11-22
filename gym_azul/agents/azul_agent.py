@@ -1,6 +1,8 @@
 from typing import List, Optional
 import numpy as np  # type: ignore
 
+from gym_azul.constants import Player
+
 
 class AzulAgent(object):
     def __init__(self, seed: Optional[int]):
@@ -8,7 +10,7 @@ class AzulAgent(object):
 
     def act(
         self,
-        player: int,
+        player: Player,
         legal_actions: List[int],
         observation: np.ndarray
     ) -> int:

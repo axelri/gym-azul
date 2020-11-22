@@ -1,11 +1,10 @@
-from typing import List, Dict, cast
+from typing import List, Dict
 
 import numpy as np  # type: ignore
 
-from gym_azul.constants import TOTAL_COLORS, max_tiles_for_line, Tile, \
-    TOTAL_LINES, \
-    TOTAL_COLUMNS, Color, ColorTile
-from gym_azul.game import Action, Line
+from gym_azul.constants import max_tiles_for_line, Tile, \
+    TOTAL_COLUMNS, Color, ColorTile, Player
+from gym_azul.game import Action, Line, Slot, Column, FloorLineTile
 from gym_azul.model import action_from_action_num, AzulState, AzulPlayerState, \
     state_from_observation, PatternLine
 
@@ -26,18 +25,18 @@ def format_tile(tile: Tile) -> str:
 
 def format_floor_line(floor_line: List[Tile]) -> str:
     line = ""
-    for tile in floor_line:
-        line += format_tile(tile)
+    for tile in FloorLineTile:
+        line += format_tile(floor_line[tile])
     return line
 
 
 def format_wall(wall: List[List[ColorTile]]) -> List[str]:
     lines = []
-    for line in range(TOTAL_LINES):
+    for line in Line:
         line_str = ""
-        for column in range(TOTAL_COLUMNS):
+        for column in Column:
             color = wall[line][column]
-            line_str += format_tile(cast(Tile, color))
+            line_str += format_tile(Tile(color))
 
         lines.append(line_str)
 
@@ -47,13 +46,14 @@ def format_wall(wall: List[List[ColorTile]]) -> List[str]:
 def format_pattern_lines(pattern_lines: List[PatternLine]) -> List[str]:
     lines = []
 
-    for line_idx, line in enumerate(pattern_lines):
+    for line in Line:
+        pattern_line = pattern_lines[line]
         line_str = ""
-        max_tiles = max_tiles_for_line(Line(line_idx))
+        max_tiles = max_tiles_for_line(Line(line))
 
-        color = line.color
-        amount = line.amount
-        line_str += format_tile(cast(Tile, color)) * amount
+        color = pattern_line.color
+        amount = pattern_line.amount
+        line_str += format_tile(Tile(color)) * amount
 
         empty = max_tiles - amount
         line_str += format_tile(Tile.EMPTY) * empty
@@ -66,7 +66,7 @@ def format_pattern_lines(pattern_lines: List[PatternLine]) -> List[str]:
 
 
 def format_player(
-    player_idx: int,
+    player: Player,
     player_state: AzulPlayerState,
     has_starting_marker: bool,
     has_next_turn: bool
@@ -81,7 +81,7 @@ def format_player(
     board.append("Fl: " + formatted_floor)
 
     lines = [
-        f"Player {player_idx + 1}",
+        f"Player {player + 1}",
         f"Points: {player_state.points:03}",
         f"Has sm: {has_starting_marker}",
         f"Has nt: {has_next_turn}",
@@ -92,20 +92,19 @@ def format_player(
 
 def format_color_count(count: Dict[Color, int]) -> str:
     line = ""
-    for color in range(TOTAL_COLORS):
-        color_value = Color(color)
-        amount = count[color_value]
-        format = format_tile(cast(Tile, color))
-        line += f"{format}:{amount:02} "
+    for color in Color:
+        amount = count[color]
+        formatted_tile = format_tile(Tile(color))
+        line += f"{formatted_tile}:{amount:02} "
 
     return line
 
 
-def format_slot_name(slot_idx):
-    if slot_idx == 0:
+def format_slot_name(slot):
+    if slot == Slot.CENTER:
         return "Cen"
     else:
-        return f"Fa{slot_idx}"
+        return f"Fa{slot}"
 
 
 def format_key_value(name: str, counts: str) -> str:
@@ -114,9 +113,10 @@ def format_key_value(name: str, counts: str) -> str:
 
 def format_slots(slots: List[Dict[Color, int]]) -> str:
     lines = []
-    for slot_idx, slot in enumerate(slots):
-        slot_name = format_slot_name(slot_idx)
-        slot_counts = format_color_count(slot)
+    for slot in Slot:
+        slot_value = slots[slot]
+        slot_name = format_slot_name(slot)
+        slot_counts = format_color_count(slot_value)
         lines.append(format_key_value(slot_name, slot_counts))
 
     return "\n".join(lines)
@@ -132,17 +132,18 @@ def format_starting_marker(starting_marker, num_players):
 
 def format_state(state: AzulState):
     starting_marker = state.starting_marker
-    player = state.player
+    current_player = state.current_player
     players = []
 
-    for player_idx, player_state in enumerate(state.players):
+    for player in Player:
+        player_state = state.players[player]
         players.append(format_player(
-            player_idx,
+            player,
             player_state,
-            starting_marker == player_idx,
-            player == player_idx
+            starting_marker == player,
+            current_player == player
         ))
-    formatted_players = "\n".join(players)
+    formatted_players = "\n".join(players[:state.num_players])
 
     formatted_slots = format_slots(state.slots)
     formatted_bag = format_key_value("Bag", format_color_count(state.bag))
@@ -162,8 +163,8 @@ def format_action_num(action_num) -> str:
 
 
 def format_action(action: Action) -> str:
-    slot, color, line, column = action
+    slot, color, line = action
     formatted_slot = format_slot_name(slot)
-    formatted_color = format_tile(color)
+    formatted_color = format_tile(Tile(color))
 
     return f"Slot: {formatted_slot}, Color: {formatted_color}, Line: {line + 1}"
