@@ -4,7 +4,7 @@ import numpy as np  # type: ignore
 
 from gym_azul.constants import STARTING_MARKER_CENTER, ColorTile, \
     Tile, Color, Line, Column, LineAmount, FloorLineTile, Slot, Player, \
-    PLAYER_INACTIVE_OBS, NumPlayers
+    PLAYER_INACTIVE_OBS, NumPlayers, StartingMarker
 from gym_azul.model.state import AzulState, AzulPlayerState, PatternLine
 
 
@@ -109,7 +109,7 @@ def lid_state(obs_lid: np.ndarray) -> Dict[Color, int]:
 def state_from_observation(observation: np.ndarray) -> AzulState:
     channels, _, _ = observation.shape
 
-    starting_marker = STARTING_MARKER_CENTER
+    starting_marker = StartingMarker.CENTER
     current_player = Player.PLAYER_1
 
     num_players = 0
@@ -121,7 +121,7 @@ def state_from_observation(observation: np.ndarray) -> AzulState:
             player_channel)
         players.append(state)
         if has_starting_token:
-            starting_marker = player
+            starting_marker = StartingMarker(player)
         if has_next_turn:
             current_player = player
         if is_active:

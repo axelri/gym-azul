@@ -7,7 +7,8 @@ from gym_azul.constants import max_tiles_for_line, \
 from gym_azul.game.move_model import Reward, Move, FloorLineMove, \
     PatternLineMove, PlacePattern, ScoreDelta, PlaceTile, PlaceFloorLine
 from gym_azul.game.rules import wall_color_column, can_place_tile
-from gym_azul.model import Action, AzulPlayerState, PatternLine, Column, Player
+from gym_azul.model import Action, AzulPlayerState, PatternLine, Column, Player, \
+    LineAmount
 
 
 def is_next_round(slots: List[Dict[Color, int]]) -> bool:
@@ -122,7 +123,8 @@ def calc_wall_score(
     for place_line_before, place_color_before in will_place_before:
         new_wall_column = wall_color_column(
             place_color_before, place_line_before)
-        new_wall[place_line_before][new_wall_column] = place_color_before
+        new_wall[place_line_before][new_wall_column] = ColorTile(
+            place_color_before)
 
     left = 0
     for col in range(column - 1, -1, -1):
@@ -171,8 +173,9 @@ def calc_wall_score(
     if deep_check:
         # check how this tile will affect tiles afterwards
         pattern_lines_after_placing = copy.deepcopy(pattern_lines)
-        pattern_lines_after_placing[line].color = color
-        pattern_lines_after_placing[line].amount = max_tiles_for_line(line)
+        pattern_lines_after_placing[line].color = ColorTile(color)
+        pattern_lines_after_placing[line].amount = LineAmount(
+            max_tiles_for_line(line))
 
         for place_line_after, place_color_after in will_place_after:
             place_column_after = wall_color_column(
@@ -229,7 +232,7 @@ def free_pattern_line_tiles(
     line_amount = pattern_lines[line].amount
 
     # Pattern line is using another color
-    if line_amount > 0 and line_color != color:
+    if line_color != ColorTile.EMPTY and line_color != color:
         return 0
 
     max_tiles = max_tiles_for_line(line)
@@ -314,7 +317,7 @@ def calc_move(
     """
 
     if advanced:
-        raise NotImplemented("Not implemented yet")
+        raise NotImplemented
 
     slot, color, line = action
 

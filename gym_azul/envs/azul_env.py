@@ -8,7 +8,7 @@ from gym_azul.envs.mu_zero_env import MuzeroEnv
 from gym_azul.game import AzulGame
 from gym_azul.model import observation_space, action_space, \
     observation_from_state, action_from_action_num, \
-    action_num_from_action, Player
+    action_num_from_action, Player, NumPlayers
 from gym_azul.util.format_utils import format_state
 
 
@@ -21,7 +21,7 @@ class AzulEnv(MuzeroEnv):
        Episode length is greater than max_turns.
    """
     render_mode: str
-    num_players: int
+    num_players: NumPlayers
     advanced: bool
     internal_seed: List[int]
     max_turns: int
@@ -39,7 +39,7 @@ class AzulEnv(MuzeroEnv):
         super().__init__()
 
         self.render_mode = render_mode
-        self.num_players = num_players
+        self.num_players = NumPlayers(num_players)
         self.max_turns = max_turns
         if seed is None:
             self.internal_seed = []
@@ -110,7 +110,7 @@ class AzulEnv(MuzeroEnv):
         return legal_action_nums
 
     def expert_action(self) -> int:
-        return self.expert_agent.act(self.to_play(),
+        return self.expert_agent.act(Player(self.to_play()),
                                      self.legal_actions(),
                                      self.get_observation())
 

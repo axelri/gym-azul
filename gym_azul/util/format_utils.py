@@ -165,6 +165,6 @@ def format_action_num(action_num) -> str:
 def format_action(action: Action) -> str:
     slot, color, line = action
     formatted_slot = format_slot_name(slot)
-    formatted_color = format_tile(color)
+    formatted_color = format_tile(Tile(color))
 
     return f"Slot: {formatted_slot}, Color: {formatted_color}, Line: {line + 1}"

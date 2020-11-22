@@ -7,7 +7,7 @@ from gym_azul.agents.azul_agent import AzulAgent
 from gym_azul.constants import Slot, \
     Line
 from gym_azul.game import free_pattern_line_tiles, wall_color_column
-from gym_azul.model import AzulState, AzulPlayerState, Color
+from gym_azul.model import AzulState, AzulPlayerState, Color, Player
 from gym_azul.model import state_from_observation, action_num_from_action, \
     Action
 
@@ -33,7 +33,7 @@ class GreedyAgent(AzulAgent):
 
     def act(
         self,
-        player: int,
+        player: Player,
         legal_actions: List[int],
         observation: np.ndarray
     ) -> int:
@@ -51,6 +51,7 @@ class GreedyAgent(AzulAgent):
 
         player_state: AzulPlayerState = state.players[player]
         wall = player_state.wall
+
         pattern_lines = player_state.pattern_lines
 
         # Put in largest pattern line
@@ -63,8 +64,6 @@ class GreedyAgent(AzulAgent):
 
                 # if we can place, then do it!
                 if free_tiles > 0:
-                    print("Free tiles")
-                    print(free_tiles)
                     action = Action(slot, color, line)
                     return action_num_from_action(action)
 

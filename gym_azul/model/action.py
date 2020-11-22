@@ -1,6 +1,6 @@
 from typing import NamedTuple, Dict
 
-from gym import Space, spaces
+from gym import Space, spaces  # type: ignore
 
 from gym_azul.constants import TOTAL_SLOTS, TOTAL_COLORS, TOTAL_LINES, \
     TOTAL_COLUMNS, Slot, Color, Line, Column

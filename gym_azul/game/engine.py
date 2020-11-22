@@ -11,7 +11,7 @@ from gym_azul.game.move_model import PlacePattern, ActionResult, \
     PlaceFloorLine
 from gym_azul.game.rules import generate_legal_actions, wall_color_column
 from gym_azul.model import Action, new_state, AzulState, new_floor_line, Player, \
-    LineAmount, FloorLineTile, NumPlayers
+    LineAmount, FloorLineTile, NumPlayers, StartingMarker
 
 
 class AzulGame:
@@ -81,8 +81,10 @@ class AzulGame:
         # Put in pattern line if putting > 0 tiles
         pattern_lines = player_state.pattern_lines
         if place_amount > 0:
-            pattern_lines[place_line].color = place_color
-            pattern_lines[place_line].amount += place_amount
+            pattern_lines[place_line].color = ColorTile(place_color)
+            old_amount = pattern_lines[place_line].amount
+            pattern_lines[place_line].amount = LineAmount(
+                old_amount + place_amount)
 
         # Put in floor line
         floor_line = player_state.floor_line
@@ -90,13 +92,15 @@ class AzulGame:
             floor_line[column] = floor_line_color
             # Player took starting token
             if floor_line_color == Tile.STARTING_TOKEN.value:
-                self.state.starting_marker = self.state.current_player
+                self.state.starting_marker = StartingMarker(
+                    self.state.current_player)
 
         # Discard to lid
         for discard_tile in discard:
             if discard_tile == Tile.STARTING_TOKEN.value:
                 # Player took starting token
-                self.state.starting_marker = self.state.current_player
+                self.state.starting_marker = StartingMarker(
+                    self.state.current_player)
             else:
                 self.state.lid[Color(discard_tile)] += 1
 
@@ -196,7 +200,7 @@ class AzulGame:
                 for lid_color in Color:
                     lid[lid_color] = 0
 
-        self.state.starting_marker = STARTING_MARKER_CENTER
+        self.state.starting_marker = StartingMarker.CENTER
 
     def next_round(self) -> None:
         """
@@ -219,10 +223,10 @@ class AzulGame:
 
         # set next player to who has the starting marker
         starting_marker = self.state.starting_marker
-        if starting_marker != STARTING_MARKER_CENTER:
-            self.state.current_player = starting_marker
+        if starting_marker != StartingMarker.CENTER:
+            self.state.current_player = Player(starting_marker)
         # reset starting marker to center
-        self.state.starting_marker = STARTING_MARKER_CENTER
+        self.state.starting_marker = StartingMarker.CENTER
         self.state.round += 1
 
     def action_handler(self, action: Action) -> Tuple[float, Dict[str, int]]:
@@ -262,8 +266,8 @@ class AzulGame:
         move_reward_capped = max(move_reward, -points)
 
         self.state.turn += 1
-        self.state.current_player = (
-            (self.state.current_player + 1) % self.num_players)
+        next_player = (self.state.current_player + 1) % self.num_players
+        self.state.current_player = Player(next_player)
 
         if is_next_round(slots):
             self.next_round()

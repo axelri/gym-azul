@@ -136,7 +136,7 @@ NUM_FACTORIES: Dict[int, int] = {
 
 PENALTIES: List[int] = [1, 1, 2, 2, 2, 3, 3]
 
-PLAYER_INACTIVE_OBS: int = 7
+PLAYER_INACTIVE_OBS: int = -1
 
 
 def get_num_factories(num_players: int) -> int:

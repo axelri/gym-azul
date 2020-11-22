@@ -71,7 +71,7 @@ def player_channel(
     10 x 10
     """
 
-    if player_in_game:
+    if not player_in_game:
         return np.full((10, 10), PLAYER_INACTIVE_OBS, dtype=np.int32)
 
     pattern_lines = obs_pattern_lines(player_state.pattern_lines)
@@ -158,21 +158,21 @@ def observation_from_state(state: AzulState) -> np.ndarray:
     """
     starting_marker = state.starting_marker
 
-    players = []
+    player_obs: List[np.ndarray] = []
     for player in Player:
         player_state = state.players[player]
-        players.append(
+        player_obs.append(
             player_channel(
                 player_state,
                 starting_marker == player,
                 state.current_player == player,
                 player < state.num_players
             ))
+    board_obs: np.ndarray = board_channel(state.slots, state.bag, state.lid)
 
-    board = board_channel(state.slots, state.bag, state.lid)
-
-    observation = np.dstack((*players, board))
+    observation = np.dstack((*player_obs, board_obs))
+    moved_axis = np.moveaxis(observation, 2, 0)
 
     # format requires channel to be first dimension
     # dstack makes this the last dimension
-    return np.moveaxis(observation, 2, 0)
+    return moved_axis

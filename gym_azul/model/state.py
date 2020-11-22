@@ -65,7 +65,7 @@ class AzulState:
     lid: Dict[Color, int] = field(default_factory=new_lid)
     starting_marker: StartingMarker = StartingMarker.CENTER
     current_player: Player = Player.PLAYER_1
-    num_players: NumPlayers = 2
+    num_players: NumPlayers = NumPlayers.PLAYERS_2
     turn: int = 0
     round: int = 0
 
