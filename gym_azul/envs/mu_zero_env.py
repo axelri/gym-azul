@@ -4,6 +4,15 @@ import gym  # type: ignore
 
 
 class MuzeroEnv(gym.Env):
+    def step(self, action):
+        pass
+
+    def reset(self):
+        pass
+
+    def render(self, mode='human'):
+        pass
+
     def to_play(self) -> int:
         """
         Returns the current player.

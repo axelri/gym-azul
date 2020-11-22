@@ -22,6 +22,7 @@ work well with [muzero-general](https://github.com/werner-duvaud/muzero-general)
    2. [Example run](#Example-run)
 6. [Development](#Development)
    1. [Type checking](#Type-checking)
+   2. [Packaging](#Packaging)
 7. [Misc](#Misc)
    1. [Contribute](#Contribute)
    2. [Credits](#Credits)
@@ -73,9 +74,8 @@ would be performed by the player.
 ##  Using pip
 
 ```
-$ git clone git@github.com:riees/gym-azul.git
-$ cd gym-azul
-$ pip install -e src
+$ git clone git@github.com:riese/gym-azul.git
+$ pip install -e .
 ```
 
 # Usage
@@ -97,7 +97,7 @@ while not done:
 ## Example run
 
 ```
-python src/azul_test.py 2 500 greedy
+python azul_test.py 2 500 greedy
 ```
 
 # Development
@@ -114,6 +114,12 @@ $ pip install mypy
 Then run it against the source code:
 ```
 mypy gym_azul
+```
+
+## Packaging
+
+```
+$ python setup.py sdist bdist_wheel
 ```
 
 # Misc
