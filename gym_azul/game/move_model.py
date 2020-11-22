@@ -1,12 +1,13 @@
 from typing import List, NamedTuple, Dict
 
-from gym_azul.constants import Line, Color, Column, Tile, FloorLineTile
+from gym_azul.constants import Line, Color, Column, Tile, FloorLineTile, \
+    LineAmount
 
 
 class PlacePattern(NamedTuple):
     line: Line
     color: Color
-    amount: int
+    amount: LineAmount
 
 
 class PlaceLine(NamedTuple):
@@ -35,22 +36,21 @@ class Move(NamedTuple):
     discard: List[Tile]
 
 
+class Reward(NamedTuple):
+    before: int
+    after: int
+
+
 class FloorLineMove(NamedTuple):
     floor_line: List[PlaceFloorLine]
     discard: List[Tile]
-    round_penalty: int
+    round_penalty: Reward
 
 
 class PatternLineMove(NamedTuple):
     pattern_line: PlacePattern
-    round_reward: int
-    bonus_reward: int
-
-
-class Reward(NamedTuple):
-    round_reward: int
-    bonus_reward: int
-    round_penalty: int
+    round_reward: Reward
+    bonus_reward: Reward
 
 
 class ActionResult(NamedTuple):

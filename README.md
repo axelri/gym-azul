@@ -51,7 +51,7 @@ chosen color.
 
 ## Observations
 
-The observation is a matrix on the form `(N+1, 10, 10)`, where N is the number of players.
+The observation is a matrix on the form `(5, 10, 10)`.
 
 ## Actions
 
@@ -120,6 +120,12 @@ mypy gym_azul
 
 ```
 $ python setup.py sdist bdist_wheel
+$ pip install gym-azul --no-index --find-links file:////$(pwd)/dist
+```
+
+Or install in dev mode (might confuse intellij):
+```
+$ pip install -e .
 ```
 
 # Misc

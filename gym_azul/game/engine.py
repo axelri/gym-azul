@@ -6,12 +6,13 @@ from gym_azul.constants import max_tiles_for_line, PENALTIES, \
     get_num_factories, Tile, STARTING_MARKER_CENTER, \
     TILES_PER_FACTORY, Slot, Color, Line, ColorTile
 from gym_azul.game.calculations import calc_move, is_next_round, is_game_over, \
-    calc_bonus_points, calc_wall_score
+    calc_bonus_score, calc_score, calc_penalty
 from gym_azul.game.move_model import PlacePattern, ActionResult, \
     PlaceFloorLine
 from gym_azul.game.rules import generate_legal_actions, wall_color_column
-from gym_azul.model import Action, new_state, AzulState, new_floor_line, Player, \
-    LineAmount, FloorLineTile, NumPlayers, StartingMarker
+from gym_azul.model import Action, new_state, AzulState, new_floor_line, \
+    Player, LineAmount, FloorLineTile, NumPlayers, StartingMarker, \
+    new_pattern_lines
 
 
 class AzulGame:
@@ -112,6 +113,13 @@ class AzulGame:
         for player_board in self.state.players:
             pattern_lines = player_board.pattern_lines
             wall = player_board.wall
+            floor_line = player_board.floor_line
+            points = player_board.points
+
+            round_score, _bonus_score = calc_score(wall, pattern_lines)
+            round_penalty = calc_penalty(floor_line)
+            # never go below zero
+            player_board.points = max(0, points + round_score - round_penalty)
 
             for line in Line:
                 max_tiles = max_tiles_for_line(line)
@@ -121,13 +129,7 @@ class AzulGame:
                 # place, score and discard if full pattern line
                 if line_amount == max_tiles:
                     line_color = Color(line_color_tile)
-                    # calculate score
-                    # TODO: advanced mode, choose a column
                     wall_column = wall_color_column(line_color, line)
-                    round_score_delta, _ = calc_wall_score(
-                        wall, pattern_lines, line_color,
-                        line, wall_column, deep_check=False)
-                    player_board.points += round_score_delta
 
                     # place one tile on wall
                     wall[line][wall_column] = ColorTile(line_color)
@@ -136,23 +138,21 @@ class AzulGame:
                     self.state.lid[line_color] += (line_amount - 1)
 
                     # clear pattern lines
-                    pattern_lines[line].color = ColorTile.EMPTY
-                    pattern_lines[line].amount = LineAmount.AMOUNT_0
+                    for new_line in Line:
+                        player_board.pattern_lines[
+                            line].color = ColorTile.EMPTY
+                        player_board.pattern_lines[
+                            line].amount = LineAmount.AMOUNT_0
 
             for floor_line_tile in FloorLineTile:
                 tile = player_board.floor_line[floor_line_tile]
-                # ignore starting marker
-                if tile != Tile.EMPTY:
-                    # calculate penalty
-                    penalty = PENALTIES[floor_line_tile]
-                    # do not go below zero points
-                    player_board.points = max(0, player_board.points - penalty)
+                # discard to lid
+                if tile != Tile.STARTING_TOKEN and tile != Tile.EMPTY:
+                    self.state.lid[Color(tile)] += 1
 
-                    # discard to lid
-                    if tile != Tile.STARTING_TOKEN:
-                        self.state.lid[Color(tile)] += 1
-
-            player_board.floor_line = new_floor_line()
+            # clear floor line
+            for floor_line_tile in FloorLineTile:
+                player_board.floor_line[floor_line_tile] = Tile.EMPTY
 
     def process_board_new_round(self) -> None:
         """
@@ -215,7 +215,7 @@ class AzulGame:
             self.game_over = True
             for player in Player:
                 player_board = players[player]
-                bonus = calc_bonus_points(player_board.wall)
+                bonus = calc_bonus_score(player_board.wall)
                 player_board.points += bonus
             return
 
@@ -259,12 +259,6 @@ class AzulGame:
                        place_floor_line,
                        discard)
 
-        points = player_board.points
-        round_reward, bonus_reward, round_penalty = reward
-        move_reward = round_reward + bonus_reward - round_penalty
-        # can not go below zero points
-        move_reward_capped = max(move_reward, -points)
-
         self.state.turn += 1
         next_player = (self.state.current_player + 1) % self.num_players
         self.state.current_player = Player(next_player)
@@ -272,10 +266,6 @@ class AzulGame:
         if is_next_round(slots):
             self.next_round()
 
-        move_info = {
-            "round_reward": round_reward,
-            "bonus_reward": bonus_reward,
-            "round_penalty": round_penalty
-        }
+        move_info = {}
 
-        return ActionResult(float(move_reward_capped), move_info)
+        return ActionResult(float(reward), move_info)

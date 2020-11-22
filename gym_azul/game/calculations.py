@@ -5,7 +5,7 @@ from gym_azul.constants import max_tiles_for_line, \
     PENALTIES, Tile, Color, ColorTile, Line, Slot, FloorLineTile, \
     TOTAL_COLUMNS, TOTAL_LINES, TOTAL_COLORS
 from gym_azul.game.move_model import Reward, Move, FloorLineMove, \
-    PatternLineMove, PlacePattern, ScoreDelta, PlaceTile, PlaceFloorLine
+    PatternLineMove, PlacePattern, PlaceTile, PlaceFloorLine
 from gym_azul.game.rules import wall_color_column, can_place_tile
 from gym_azul.model import Action, AzulPlayerState, PatternLine, Column, Player, \
     LineAmount
@@ -44,7 +44,7 @@ def is_game_over(player_boards: List[AzulPlayerState]) -> bool:
     return False
 
 
-def calc_bonus_points(wall: List[List[ColorTile]]) -> int:
+def calc_bonus_score(wall: List[List[ColorTile]]) -> int:
     line_count = [0] * TOTAL_LINES
     column_count = [0] * TOTAL_COLUMNS
 
@@ -81,7 +81,69 @@ def calc_bonus_points(wall: List[List[ColorTile]]) -> int:
     return (full_lines * 2) + (full_columns * 7) + (full_colors * 10)
 
 
-def calc_will_place_this_round(
+def calc_score(
+    wall: List[List[ColorTile]],
+    pattern_lines: List[PatternLine]
+) -> Tuple[int, int]:
+    place_this_round = calc_place_this_round(pattern_lines)
+    next_wall = copy.deepcopy(wall)
+    total_round_score = 0
+
+    for line, color in place_this_round:
+        column = wall_color_column(color, line)
+        next_wall[line][column] = ColorTile(color)
+
+        left = 0
+        for col in range(column - 1, -1, -1):
+            if next_wall[line][col] != ColorTile.EMPTY:
+                left += 1
+            else:
+                break
+
+        right = 0
+        for col in range(column + 1, TOTAL_COLUMNS, 1):
+            if next_wall[line][col] != ColorTile.EMPTY:
+                right += 1
+            else:
+                break
+
+        up = 0
+        for row in range(line - 1, -1, -1):
+            if next_wall[row][column] != ColorTile.EMPTY:
+                up += 1
+            else:
+                break
+
+        down = 0
+        for row in range(line + 1, TOTAL_COLUMNS, 1):
+            if next_wall[row][column] != ColorTile.EMPTY:
+                down += 1
+            else:
+                break
+
+        horizontal_points = left + right
+        if horizontal_points > 0:
+            # add placed tile
+            horizontal_points += 1
+
+        vertical_points = up + down
+        if vertical_points > 0:
+            # add placed tile
+            vertical_points += 1
+
+        single_points = 0
+        if horizontal_points == 0 and vertical_points == 0:
+            single_points = 1
+
+        tile_score = horizontal_points + vertical_points + single_points
+
+        total_round_score += tile_score
+
+    bonus_after_round = calc_bonus_score(next_wall)
+    return total_round_score, bonus_after_round
+
+
+def calc_place_this_round(
     pattern_lines: List[PatternLine]
 ) -> List[PlaceTile]:
     placed = []
@@ -95,123 +157,6 @@ def calc_will_place_this_round(
             placed.append(PlaceTile(line, Color(line_color)))
 
     return placed
-
-
-def calc_wall_score(
-    wall: List[List[ColorTile]],
-    pattern_lines: List[PatternLine],
-    color: Color,
-    line: Line,
-    column: Column,
-    deep_check: bool = True
-) -> ScoreDelta:
-    """
-    What score will we add if this is placed?
-    """
-
-    will_place_this_round = calc_will_place_this_round(pattern_lines)
-
-    # tiles are placed in order from the top
-    # these tiles are not affected by this tile, but will affect this tile
-    will_place_before = filter(lambda x: x.line < line, will_place_this_round)
-
-    # these tiles are affected by this tile, but do not affect this tile
-    will_place_after = filter(lambda x: x.line > line, will_place_this_round)
-
-    # calculate on future wall
-    new_wall = copy.deepcopy(wall)
-    for place_line_before, place_color_before in will_place_before:
-        new_wall_column = wall_color_column(
-            place_color_before, place_line_before)
-        new_wall[place_line_before][new_wall_column] = ColorTile(
-            place_color_before)
-
-    left = 0
-    for col in range(column - 1, -1, -1):
-        if new_wall[line][col] != ColorTile.EMPTY:
-            left += 1
-        else:
-            break
-
-    right = 0
-    for col in range(column + 1, TOTAL_COLUMNS, 1):
-        if new_wall[line][col] != ColorTile.EMPTY:
-            right += 1
-        else:
-            break
-
-    up = 0
-    for row in range(line - 1, -1, -1):
-        if new_wall[row][column] != ColorTile.EMPTY:
-            up += 1
-        else:
-            break
-
-    down = 0
-    for row in range(line + 1, TOTAL_COLUMNS, 1):
-        if new_wall[row][column] != ColorTile.EMPTY:
-            down += 1
-        else:
-            break
-
-    horizontal_points = left + right
-    if horizontal_points > 0:
-        # add placed tile
-        horizontal_points += 1
-
-    vertical_points = up + down
-    if vertical_points > 0:
-        # add placed tile
-        vertical_points += 1
-
-    single_points = 0
-    if horizontal_points == 0 and vertical_points == 0:
-        single_points = 1
-
-    round_score = horizontal_points + vertical_points + single_points
-
-    if deep_check:
-        # check how this tile will affect tiles afterwards
-        pattern_lines_after_placing = copy.deepcopy(pattern_lines)
-        pattern_lines_after_placing[line].color = ColorTile(color)
-        pattern_lines_after_placing[line].amount = LineAmount(
-            max_tiles_for_line(line))
-
-        for place_line_after, place_color_after in will_place_after:
-            place_column_after = wall_color_column(
-                place_color_after, place_line_after)
-
-            old_round_score, _ = calc_wall_score(
-                wall, pattern_lines, place_color_after,
-                place_line_after, place_column_after, deep_check=False)
-
-            new_round_score, _ = calc_wall_score(
-                wall, pattern_lines_after_placing, place_color_after,
-                place_line_after, place_column_after, deep_check=False)
-
-            round_score += (new_round_score - old_round_score)
-
-    bonus_score = 0
-    # full row
-    if horizontal_points == 5:
-        bonus_score += 2
-
-    # full column
-    if vertical_points == 5:
-        bonus_score += 7
-
-    # all colors filled
-    all_tiles_filled = True
-    for color_line in Line:
-        color_col = wall_color_column(color, color_line)
-        if wall[color_line][color_col] != color:
-            all_tiles_filled = False
-            break
-
-    if all_tiles_filled:
-        bonus_score += 10
-
-    return ScoreDelta(round_score, bonus_score)
 
 
 def free_pattern_line_tiles(
@@ -256,23 +201,39 @@ def calc_place_pattern_line(
         wall, pattern_lines, color, line, column)
     amount = min(free_tiles, tiles_amount)
 
-    place_pattern = PlacePattern(line, color, amount)
+    place_pattern = PlacePattern(line, color, LineAmount(amount))
 
-    # Can not place any tiles
-    if amount == 0:
-        return PatternLineMove(place_pattern, 0, 0)
+    round_score_before, bonus_score_before = calc_score(
+        wall, pattern_lines)
 
     # Place the tiles on the pattern line
-    round_reward = 0
-    bonus_reward = 0
+    round_score_after = round_score_before
+    bonus_score_after = bonus_score_before
+
+    # calculate score after placement
     if amount == free_tiles:
-        # We can place on wall
-        round_score_delta, bonus_score_delta = calc_wall_score(
-            wall, pattern_lines, color, line, column)
-        round_reward = round_score_delta
-        bonus_reward = bonus_score_delta
+        next_pattern_lines = copy.deepcopy(pattern_lines)
+        next_pattern_lines[line].color = color
+        next_pattern_lines[line].amount = max_tiles_for_line(line)
+        round_score_after, bonus_score_after = calc_score(
+            wall, next_pattern_lines)
+
+    round_reward = Reward(round_score_before, round_score_after)
+    bonus_reward = Reward(bonus_score_before, bonus_score_after)
 
     return PatternLineMove(place_pattern, round_reward, bonus_reward)
+
+
+def calc_penalty(
+    floor_line: List[Tile]
+) -> int:
+    penalty = 0
+    for floor_line_tile in FloorLineTile:
+        tile = floor_line[floor_line_tile]
+        if tile != Tile.EMPTY:
+            penalty += PENALTIES[floor_line_tile]
+
+    return penalty
 
 
 def calc_place_floor_line(
@@ -292,7 +253,6 @@ def calc_place_floor_line(
         discard.append(Tile.STARTING_TOKEN)
 
     # Place discarded tokens on floor line
-    round_penalty = 0
     placed_tiles = []
     for floor_line_tile in FloorLineTile:
         tile = floor_line[floor_line_tile]
@@ -300,9 +260,34 @@ def calc_place_floor_line(
             tile_to_place = discard.pop()
             placed_tiles.append(PlaceFloorLine(
                 FloorLineTile(floor_line_tile), tile_to_place))
-            round_penalty += PENALTIES[floor_line_tile]
 
-    return FloorLineMove(placed_tiles, discard, round_penalty)
+    penalty_before = calc_penalty(floor_line)
+    next_floor_line = copy.deepcopy(floor_line)
+    for floor_line_tile, tile in placed_tiles:
+        next_floor_line[floor_line_tile] = tile
+    penalty_after = calc_penalty(next_floor_line)
+    penalty = Reward(penalty_before, penalty_after)
+
+    return FloorLineMove(placed_tiles, discard, penalty)
+
+
+def calc_move_reward(
+    points: int,
+    round_reward: Reward,
+    bonus_reward: Reward,
+    round_penalty: Reward,
+) -> int:
+    bonus_before, bonus_after = bonus_reward
+    round_before, round_after = round_reward
+    penalty_before, penalty_after = round_penalty
+
+    points_before = max(0, points + round_before - penalty_before)
+    total_before = points_before + bonus_before
+
+    points_after = max(0, points + round_after - penalty_after)
+    total_after = points_after + bonus_after
+
+    return total_after - total_before
 
 
 def calc_move(
@@ -311,7 +296,7 @@ def calc_move(
     starting_marker_in_center: bool,
     action: Action,
     advanced: bool = False
-) -> Optional[Tuple[Move, Reward]]:
+) -> Optional[Tuple[Move, int]]:
     """
     Checks if the move given move is valid. Returns None for invalid actions
     """
@@ -344,6 +329,7 @@ def calc_move(
         starting_marker_in_center)
 
     move = Move(place_pattern_line, place_floor_line, discard)
-    reward = Reward(round_reward, bonus_reward, round_penalty)
+    reward = calc_move_reward(player_board.points, round_reward, bonus_reward,
+                              round_penalty)
 
     return move, reward
