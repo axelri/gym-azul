@@ -29,12 +29,15 @@ if __name__ == "__main__":
         print("Initial board")
         env.render()
 
+        tot_legal_actions = 0
+
         step = 0
         for step in range(2000):
             print(f"Step: {step}")
 
             done = False
             legal_actions = env.legal_actions()
+            tot_legal_actions += len(legal_actions)
             current_player = Player(env.to_play())
 
             action = agent.act(current_player, legal_actions, observation)
@@ -59,4 +62,6 @@ if __name__ == "__main__":
 
         if not episode_done:
             print(f"Episode did not finish after {step} steps")
+
+        print(f"Average legal actions: {tot_legal_actions / step}")
     env.close()

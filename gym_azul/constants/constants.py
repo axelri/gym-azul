@@ -4,15 +4,17 @@ from typing import Dict, List
 
 class NumPlayers(IntEnum):
     PLAYERS_2 = 2
-    PLAYERS_3 = 3
-    PLAYERS_4 = 4
+    # TODO: support more players
+    # PLAYERS_3 = 3
+    # PLAYERS_4 = 4
 
 
 class Player(IntEnum):
     PLAYER_1 = 0
     PLAYER_2 = 1
-    PLAYER_3 = 2
-    PLAYER_4 = 3
+    # TODO: support more players
+    # PLAYER_3 = 2
+    # PLAYER_4 = 3
 
 
 class LineAmount(IntEnum):
@@ -112,20 +114,11 @@ TILES_PER_COLOR: int = 20
 
 TILES_PER_FACTORY: int = 4
 
-MIN_PLAYERS: int = 2
-
-MAX_PLAYERS: int = 4
-
-STARTING_MARKER_CENTER: int = MAX_PLAYERS
+# TODO: Support more players
+MAX_PLAYERS: NumPlayers = NumPlayers.PLAYERS_2
 
 # Maximum points achieved by placing full columns in every turn
-MAX_POINTS: int = 141
-
-# Place last column
-MAX_POINTS_ROUND: int = 35
-
-# 2 x 5  + 7 x 5 + 10 x 5
-MAX_BONUS_POINTS: int = 95
+MAX_POINTS: int = 236
 
 # Number of factories for different player counts
 NUM_FACTORIES: Dict[int, int] = {

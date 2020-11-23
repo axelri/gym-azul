@@ -298,14 +298,13 @@ def board_channel(num_players: int) -> Tuple[np.ndarray, np.ndarray]:
 def observation_space(num_players: int) -> Space:
     """
     Matrix:
-    5 x 10 x 10
+    3 x 10 x 10
 
     | Channel | Row 0-9, Col 0-9 |
     |---------|------------------|
     | 0       | Player 1         |
-    | ...     |                  |
-    | 3       | Player 4         |
-    | 4       | Shared Board     |
+    | 1       | Player 2         |
+    | 2       | Shared Board     |
     """
     player_low, player_high = player_channel()
     players_low = [player_low] * MAX_PLAYERS

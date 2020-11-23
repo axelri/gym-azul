@@ -2,17 +2,15 @@ from typing import Dict, List, Tuple, Optional
 
 from numpy.random import default_rng, Generator  # type: ignore
 
-from gym_azul.constants import max_tiles_for_line, PENALTIES, \
-    get_num_factories, Tile, STARTING_MARKER_CENTER, \
+from gym_azul.constants import max_tiles_for_line, get_num_factories, Tile, \
     TILES_PER_FACTORY, Slot, Color, Line, ColorTile
 from gym_azul.game.calculations import calc_move, is_next_round, is_game_over, \
     calc_bonus_score, calc_score, calc_penalty
 from gym_azul.game.move_model import PlacePattern, ActionResult, \
     PlaceFloorLine
 from gym_azul.game.rules import generate_legal_actions, wall_color_column
-from gym_azul.model import Action, new_state, AzulState, new_floor_line, \
-    Player, LineAmount, FloorLineTile, NumPlayers, StartingMarker, \
-    new_pattern_lines
+from gym_azul.model import Action, new_state, AzulState, Player, LineAmount, \
+    FloorLineTile, NumPlayers, StartingMarker
 
 
 class AzulGame:
@@ -242,7 +240,7 @@ class AzulGame:
         result = calc_move(
             player_board,
             slots,
-            starting_marker == STARTING_MARKER_CENTER,
+            starting_marker == StartingMarker.CENTER,
             action,
             self.advanced)
 

@@ -2,7 +2,7 @@ from typing import Tuple, List, Dict
 
 import numpy as np  # type: ignore
 
-from gym_azul.constants import STARTING_MARKER_CENTER, ColorTile, \
+from gym_azul.constants import ColorTile, \
     Tile, Color, Line, Column, LineAmount, FloorLineTile, Slot, Player, \
     PLAYER_INACTIVE_OBS, NumPlayers, StartingMarker
 from gym_azul.model.state import AzulState, AzulPlayerState, PatternLine
