@@ -22,7 +22,6 @@ class AzulEnv(MuzeroEnv):
    """
     render_mode: str
     num_players: NumPlayers
-    advanced: bool
     internal_seed: List[int]
     max_turns: int
     game: AzulGame
@@ -49,7 +48,7 @@ class AzulEnv(MuzeroEnv):
 
         self.action_space = action_space()
         self.observation_space = observation_space(self.num_players)
-        self.game = AzulGame(num_players=self.num_players, advanced=False)
+        self.game = AzulGame(num_players=self.num_players)
 
     def seed(self, seed: Optional[int] = None) -> List[int]:
         if seed is not None:

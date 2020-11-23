@@ -164,13 +164,12 @@ def free_pattern_line_tiles(
     pattern_lines: List[PatternLine],
     color: Color,
     line: Line,
-    column: Column,
-    advanced: bool = False
+    column: Column
 ) -> int:
     """
     How many tiles can we place on this pattern line?
     """
-    if not can_place_tile(wall, color, line, column, advanced):
+    if not can_place_tile(wall, color, line, column):
         return 0
 
     line_color = pattern_lines[line].color
@@ -294,15 +293,11 @@ def calc_move(
     player_board: AzulPlayerState,
     slots: List[Dict[Color, int]],
     starting_marker_in_center: bool,
-    action: Action,
-    advanced: bool = False
+    action: Action
 ) -> Optional[Tuple[Move, int]]:
     """
     Checks if the move given move is valid. Returns None for invalid actions
     """
-
-    if advanced:
-        raise NotImplemented
 
     slot, color, line = action
 

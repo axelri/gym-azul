@@ -1,22 +1,15 @@
-from typing import NamedTuple, Dict
+from typing import NamedTuple
 
 from gym import Space, spaces  # type: ignore
 
 from gym_azul.constants import TOTAL_SLOTS, TOTAL_COLORS, TOTAL_LINES, \
-    TOTAL_COLUMNS, Slot, Color, Line, Column
+    Slot, Color, Line
 
 
 class Action(NamedTuple):
     slot: Slot
     color: Color
     line: Line
-
-
-class AdvancedAction(NamedTuple):
-    slot: Slot
-    color: Color
-    line: Line
-    wallPlacement: Dict[Line, Column]
 
 
 def action_space() -> Space:
@@ -49,16 +42,3 @@ def action_from_action_num(action: int) -> Action:
     line = after_color
 
     return Action(Slot(slot), Color(color), Line(line))
-
-
-# TODO: implement advanced mode
-def advanced_action_space() -> Space:
-    """
-    Scalar value:
-
-    Slot x Color x Line x (Line x Column)
-    """
-    place_on_pattern_line = TOTAL_SLOTS * TOTAL_COLORS * TOTAL_LINES
-    place_on_wall = TOTAL_LINES * TOTAL_COLUMNS
-
-    return spaces.Discrete(place_on_pattern_line * place_on_wall)

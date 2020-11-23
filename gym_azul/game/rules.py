@@ -31,34 +31,21 @@ def can_place_tile(
     color: Color,
     line: Line,
     column: Column,
-    advanced=False
 ) -> bool:
-    if advanced:
-        for wall_line in Line:
-            if wall[wall_line][column] == cast(ColorTile, color):
-                # color is already in same column
-                return False
+    fixed_column = wall_color_column(color, line)
+    if column != fixed_column:
+        # fixed columns in basic mode
+        return False
 
-        for wall_column in Column:
-            if wall[line][wall_column] == cast(ColorTile, color):
-                # color is already in same line
-                return False
-    else:
-        fixed_column = wall_color_column(color, line)
-        if column != fixed_column:
-            # fixed columns in basic mode
-            return False
-
-        if wall[line][column] == cast(ColorTile, color):
-            # color is already placed in fixed position
-            return False
+    if wall[line][column] == cast(ColorTile, color):
+        # color is already placed in fixed position
+        return False
 
     return True
 
 
 def generate_legal_actions(
     slots: List[Dict[Color, int]],
-    advanced=False
 ) -> List[Action]:
     """
     Illegal actions:

@@ -16,7 +16,6 @@ from gym_azul.model import Action, new_state, AzulState, Player, LineAmount, \
 class AzulGame:
     random: Generator
     num_players: NumPlayers
-    advanced: bool
     state: AzulState
     game_over: bool
 
@@ -25,16 +24,19 @@ class AzulGame:
         num_players: NumPlayers,
         seed: Optional[int] = None,
         start_player: Player = Player.PLAYER_1,
-        advanced: bool = False
+        state: Optional[AzulState] = None
     ) -> None:
         if seed is None:
             self.random = default_rng()
         else:
             self.random = default_rng(seed)
 
+        if state is None:
+            self.state = new_state(self.num_players, start_player)
+        else:
+            self.state = state
+
         self.num_players = num_players
-        self.advanced = advanced
-        self.state = new_state(self.num_players, start_player)
         self.game_over = False
 
     def seed(self, seed: int) -> int:
@@ -51,8 +53,7 @@ class AzulGame:
 
     def legal_actions(self) -> List[Action]:
         return generate_legal_actions(
-            self.state.slots,
-            advanced=self.advanced)
+            self.state.slots)
 
     def play_turn(
         self,
@@ -241,8 +242,7 @@ class AzulGame:
             player_board,
             slots,
             starting_marker == StartingMarker.CENTER,
-            action,
-            self.advanced)
+            action)
 
         if result is None:
             # Invalid action, do not update
